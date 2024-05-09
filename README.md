@@ -13,8 +13,11 @@ To use this userscript, you will need a userscript manager. [Tampermonkey](https
 
 2. **Add the Userscript:**
    - Open your Tampermonkey dashboard by clicking the Tampermonkey icon in your browser and selecting "Dashboard".
-   - Go to the "Utilities" tab and under "URL" paste the link to the raw `.user.js` file hosted on [Greasy Fork](https://update.greasyfork.org/scripts/494477/Age%20Gate%20Bypass%20for%20Epic%20Games%20Store%20and%20Steam.user.js).
-   - Save the script by clicking on the disk icon or pressing `Ctrl + S`.
+   - Click the following button to install the script:
+
+     [![Install Userscript](https://img.shields.io/badge/-Install%20Userscript-brightgreen?style=for-the-badge&logo=Tampermonkey&logoColor=white)](https://raw.githubusercontent.com/sermelipharo/GameStoreAgeBypass/main/GameStoreAgeBypass.user.js)
+
+   - Tampermonkey should prompt you to confirm the installation of the script. Approve the installation to proceed.
 
 3. **Enable the Script:**
    - Ensure the script is enabled in the Tampermonkey dashboard. It should appear in the list of installed scripts with a check mark or enabled toggle next to it.
