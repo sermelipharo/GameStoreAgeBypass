@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Age Gate Bypass for Epic Games Store and Steam
 // @namespace    http://t.me/LexShared
-// @version      1
+// @version      1.1
 // @description  Bypass age verification gates by setting cookies on both Epic Games Store and Steam, allowing for seamless access to content without repeated age checks.
 // @author       Lex Fradski
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAMAAABHPGVmAAAAAXNSR0IArs4c6QAAADBQTFRFR3BMAAAA////+Pj47u7u0dHRwcHBsLCwoKCgj4+Pf39/ampqUlJSNjY2Hh4eAAAA4/3B8wAAAAJ0Uk5TAMDt9w+IAAAEKElEQVR42uXaiYrjOBSF4Z4rXS13O+//ttOKI7J1tZVomC7oHxwjI/hQKWVI4h+P4b/pnx+/C5lov3qGcN8unyId2/H3QcJ/FhgH3I/hcQoA8zLgZsdshMectooU+llGpg4ncqFR6HhNCqYKpRTBY5ajEoUQQ2nk60hirqhUoJQgRMw8kMqUoETB1CCUJFMZiOhAjmnrSAEApYxGZSDHkGBEgUx1nCoxOuWB8BXBaBnJIgonCiYZiIhAibxTwhhTxVjoREgORETe25MCJLJEDqERlEYKRCLyeyQTX5DRmysZ50aEu5XUTBlAJcY90og+WUnBSChRwd2ejCOA9oT0Qh/uiQBGRH2uJK4b71dkAF6Ix0r0tpJYR0YAiMgGMvIrYhNxGslAkN7/PzEdATheXUcRqghVB0wNALzXZpfROOY0gP+yG2Thj5NlJNPHtXcQVu3nFnfZQJpKb55/DxgA5I+RZGzVWE+AUf0YYeGITnYCjHRnJcpW9BdA4LHY2BMrST2fAJd4490l2tMpMOqfI7e4DeDrfAM5B2ZpB8kaWKnuIBRYSrcQxVKxhVQs5Fq3kLwAjKlbCDm+Liawi8iXQLsBuwifA/sIBR7zVyBXdd1CFI/pKwAAsYU0PBZPwIx3kIyn+AqI476+g5DjMaFUxPGcbSGCx8Lxy9IOwlirbiDrd+ItxLBUbCENa/EOkrFW30HIsZRtIbIiSElbCJ8APoEdhOIc2EfsHNhH2jmwj2Q81V4BbhZ9B3m9E78CAGBbiOAxvwc0MEs7SMFTmUZ5ArO6g1DgsTqBx3QLMTwWgV8VW0jDWryDZKzVNpD1O/EWIlgr7SAFa5UdhAJLyRZiOC2sMW0hbQmgPSSfA/sI+RdAvwH7iJwD+0g5B/YRAmZfAvuInQP7SDsH9pFEa7Xv9eVzbPS9fhCwZrAmMIO4yDhcPdREFFCRgAtMREzEL2O4SKhHX0UiWYqsrD07hbBpsShs7K0YUKQVtOTe2Xq14F4aILV0K1JXEc/wILTesxCcoUWjZGFowwWpyFWgBb1osGkBpBQFZ38DiQNpfCCsUVqZSOEeqZcXpEEZy0hCCooqXcqBNKBYnogZK/d0QTrA1isgXSu0LCOouaFnDhFjeIUxazOtMAHQ3FkUHNYgzFYzO6BcDNbwvd7C9VYAQGgrzKUZRl6PWhPDyOaFrrGO0K0AoGmOsg+EbvHTV23J3kK6X5ofFRqi11plIuqu4+wTMTcmInkL4TLCqNKIazdgImImDytpvSWiGm8gM1zS+Tk0yYHMODCRnMcctrcQiREAhI9My7FHB9JEylBjIgHYOL+FcL3kQOQxFKlElHFF7DrNJlJqzceEdWSmAKLOv1aNeyRfN1ppxi2WEb+FIzdVm4N5fT4tgzjC0V/1U3mR7XL9Ew+R/S+Pw/0L1sgDkDFRL1YAAAAASUVORK5CYII=
@@ -43,23 +43,24 @@
             }
         });
     } else if (location.hostname.includes("steamcommunity.com")) {
-        setCookie("wants_mature_content", "1", secureOptions);
+        // Community hubs gate on `wants_mature_content_apps`: a pipe-separated
+        // list of the app IDs the visitor has accepted.
+        const appId = (location.pathname.match(/\/app\/(\d+)/) || [])[1];
 
-        window.addEventListener("DOMContentLoaded", () => {
-            const proceed = function (context = window) {
-                if ("AcceptAppHub" in context) {
-                    context.Proceed?.();
-                }
-            };
+        if (appId) {
+            const existing = (document.cookie.match(/(?:^|;\s*)wants_mature_content_apps=([^;]*)/) || [])[1];
+            const apps = existing ? decodeURIComponent(existing).split("|").filter(Boolean) : [];
 
-            if ("wrappedJSObject" in window) {
-                proceed(window.wrappedJSObject);
-            } else {
-                const script = document.createElement("script");
-                script.text = `"use strict";(${proceed})();`;
-                (document.head ?? document.documentElement).prepend(script);
-                script.remove();
+            if (!apps.includes(appId)) {
+                apps.push(appId);
+                setCookie("wants_mature_content_apps", apps.join("|"), secureOptions);
+
+                window.addEventListener("DOMContentLoaded", () => {
+                    if (document.querySelector(".contentcheck_desc_ctn")) {
+                        location.reload();
+                    }
+                });
             }
-        });
+        }
     }
 })();
